@@ -16,7 +16,6 @@ public class DetalleRecetaActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_detalle_receta);
 
@@ -28,15 +27,15 @@ public class DetalleRecetaActivity extends AppCompatActivity {
 
         int recetaId = getIntent().getIntExtra("receta_id", -1);
 
-        mostrarReceta(recetaId);
+        if (recetaId != -1) {
+            mostrarReceta(recetaId);
+        }
     }
 
     private void mostrarReceta(int recetaId) {
-
         Cursor receta = dbHelper.obtenerReceta(recetaId);
 
-        if (receta.moveToFirst()) {
-
+        if (receta != null && receta.moveToFirst()) {
             String nombre = receta.getString(
                     receta.getColumnIndexOrThrow("nombre")
             );
@@ -47,34 +46,33 @@ public class DetalleRecetaActivity extends AppCompatActivity {
 
             txtNombre.setText(nombre);
             txtPreparacion.setText(preparacion);
+            receta.close();
         }
-
-        receta.close();
 
         Cursor ingredientes = dbHelper.obtenerIngredientes(recetaId);
 
-        StringBuilder listaIngredientes = new StringBuilder();
+        if (ingredientes != null) {
+            StringBuilder listaIngredientes = new StringBuilder();
 
-        while (ingredientes.moveToNext()) {
+            while (ingredientes.moveToNext()) {
+                String ingrediente = ingredientes.getString(
+                        ingredientes.getColumnIndexOrThrow("ingrediente")
+                );
 
-            String ingrediente = ingredientes.getString(
-                    ingredientes.getColumnIndexOrThrow("ingrediente")
-            );
+                String cantidad = ingredientes.getString(
+                        ingredientes.getColumnIndexOrThrow("cantidad")
+                );
 
-            String cantidad = ingredientes.getString(
-                    ingredientes.getColumnIndexOrThrow("cantidad")
-            );
+                listaIngredientes
+                        .append("• ")
+                        .append(cantidad)
+                        .append(" - ")
+                        .append(ingrediente)
+                        .append("\n");
+            }
 
-            listaIngredientes
-                    .append("• ")
-                    .append(cantidad)
-                    .append(" - ")
-                    .append(ingrediente)
-                    .append("\n");
+            txtIngredientes.setText(listaIngredientes.toString());
+            ingredientes.close();
         }
-
-        txtIngredientes.setText(listaIngredientes.toString());
-
-        ingredientes.close();
     }
 }

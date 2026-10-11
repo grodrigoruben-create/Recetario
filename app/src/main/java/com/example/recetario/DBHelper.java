@@ -5,7 +5,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-
+import java.util.ArrayList;
 public class DBHelper extends SQLiteOpenHelper {
 
     private static final String DB_NAME = "recetario.db";
@@ -110,14 +110,54 @@ public class DBHelper extends SQLiteOpenHelper {
                 new String[]{"%" + ingrediente + "%"}
         );
     }
-    public Cursor obtenerReceta(int id) {
-
+    public ArrayList<String> obtenerListaDeIngredientes(int recetaId) {
+        ArrayList<String> listaIngredientes = new ArrayList<>();
         SQLiteDatabase db = getReadableDatabase();
 
-        return db.rawQuery(
-                "SELECT * FROM recetas WHERE id = ?",
-                new String[]{String.valueOf(id)}
+        Cursor cursor = db.rawQuery(
+                "SELECT ingrediente, cantidad FROM ingredientes WHERE receta_id = ?",
+                new String[]{String.valueOf(recetaId)}
         );
+
+        // Recorremos el cursor para llenar el ArrayList
+        if (cursor.moveToFirst()) {
+            do {
+                // Obtenemos los valores de las columnas (0 = ingrediente, 1 = cantidad)
+                String nombreIngrediente = cursor.getString(0);
+                String cantidad = cursor.getString(1);
+
+                // Los combinamos y agregamos a la lista
+                listaIngredientes.add(nombreIngrediente + " - " + cantidad);
+
+            } while (cursor.moveToNext());
+        }
+
+        cursor.close(); // Siempre cierra el cursor para liberar memoria
+        return listaIngredientes;
+    }
+    public ArrayList<Receta> obtenerTodasLasRecetas() {
+        ArrayList<Receta> listaRecetas = new ArrayList<>();
+        SQLiteDatabase db = getReadableDatabase();
+
+        Cursor cursor = db.rawQuery("SELECT * FROM recetas", null);
+
+        if (cursor.moveToFirst()) {
+            do {
+                // Extraemos cada columna según su posición en la tabla
+                int id = cursor.getInt(0);
+                String nombre = cursor.getString(1);
+                String preparacion = cursor.getString(2);
+                String foto = cursor.getString(3);
+
+                // Creamos el objeto y lo metemos a la lista
+                Receta receta = new Receta(id, nombre, preparacion, foto);
+                listaRecetas.add(receta);
+
+            } while (cursor.moveToNext());
+        }
+
+        cursor.close();
+        return listaRecetas;
     }
     public Cursor obtenerIngredientes(int recetaId) {
 
@@ -126,6 +166,13 @@ public class DBHelper extends SQLiteOpenHelper {
         return db.rawQuery(
                 "SELECT * FROM ingredientes WHERE receta_id = ?",
                 new String[]{String.valueOf(recetaId)}
+        );
+    }
+    public Cursor obtenerReceta(int id) {
+        SQLiteDatabase db = getReadableDatabase();
+        return db.rawQuery(
+                "SELECT * FROM recetas WHERE id = ?",
+                new String[]{String.valueOf(id)}
         );
     }
 
